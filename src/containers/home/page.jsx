@@ -40,7 +40,7 @@ const Home = () => {
     return (
       <div className='grid grid-cols-4 gap-8'>
           {data.map((company, index) => (
-              <Link className='h-full' href='/about'>
+              <Link key={index} className='h-full' href='/about'>
 
               <Card className='rounded-lg h-full' key={index}>
                   <div className='p-2 flex flex-col h-full   '>
