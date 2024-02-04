@@ -1,9 +1,56 @@
 'use client'
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import EmployeeCard from '@/containers/homepage/components/employeecard/page';
 import Image from "next/image";
-import { useState } from 'react';
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
+const flattenEmployees = (employee, parentId = null) => {
+    return [
+        { ...employee, parentId },
+        ...employee.direct_reports.flatMap((report) => flattenEmployees(report, employee.id)),
+    ];
+};
+
+const EmployeeCard = ({ employee, onSelect, selectedId, isVisible }) => {
+    if (!isVisible) return null;
+
+    return (
+        <div className={`flex flex-col items-center ${employee.node_level > 1 ? 'mt-4' : ''}`}>
+            <Card className="bg-white shadow-lg rounded-xl my-4 w-[300px] h-[150px]">
+                <CardHeader className="p-4 flex rounded-xl justify-between items-center bg-gray-100 h-full relative">
+                    <Image className='rounded-full absolute top-[-40px]' src='https://picsum.photos/200' width={75} height={75} alt="Employee Image" />
+                    <div className='pt-10 flex flex-col'>
+                        <CardTitle className="text-xl font-bold">{employee.name}</CardTitle>
+                        <CardDescription className="text-gray-600 text-xs">{employee.title}</CardDescription>
+                    </div>
+                    {employee.direct_reports_count > 0 && (
+                        <Badge className="cursor-pointer" onClick={() => onSelect(employee.id)}>
+                            {employee.direct_reports_count} Reports
+                        </Badge>
+                    )}
+                </CardHeader>
+            </Card>
+        </div>
+    );
+};
+
+const EmployeeRow = ({ employees, onSelect, selectedId }) => {
+    return (
+        <div className={`${employees.length < 3 ? 'flex items-center gap-4 justify-center' : 'grid grid-cols-4 gap-8 justify-start'} w-full my-4`}>
+            {employees.map((employee) => (
+                <EmployeeCard
+                    key={employee.id}
+                    employee={employee}
+                    onSelect={onSelect}
+                    selectedId={selectedId}
+                    isVisible={selectedId === null ? employee.node_level <= 2 : selectedId === employee.id || selectedId === employee.parentId}
+                />
+            ))}
+        </div>
+
+    );
+};
 
 const HomeContainer = () => {
     const data = {
@@ -18,18 +65,24 @@ const HomeContainer = () => {
         },
         "executives": {
             "CEO": {
+                "id": 1,
+                "node_level": 1,
                 "name": "Bob Chapek",
                 "title": "Chief Executive Officer",
                 "profile_link": "https://theorg.com/org/disney/team/bob-chapek",
                 "direct_reports_count": 13,
                 "direct_reports": [
                     {
+                        "id": 2,
+                        "node_level": 2,
                         "name": "Christine M. McCarthy",
                         "title": "Senior Executive Vice President and Chief Financial Officer",
                         "profile_link": "https://theorg.com/org/disney/team/christine-m-mccarthy",
                         "direct_reports_count": 2,
                         "direct_reports": [
                             {
+                                "id": 3,
+                                "node_level": 3,
                                 "name": "Alan N. Braverman",
                                 "title": "Senior Executive Vice President, General Counsel and Secretary",
                                 "profile_link": "https://theorg.com/org/disney/team/alan-n-braverman",
@@ -37,6 +90,8 @@ const HomeContainer = () => {
                                 "direct_reports": []
                             },
                             {
+                                "id": 4,
+                                "node_level": 3,
                                 "name": "Zenia Mucha",
                                 "title": "Senior Executive Vice President, Chief Communications Officer",
                                 "profile_link": "https://theorg.com/org/disney/team/zenia-mucha",
@@ -47,12 +102,16 @@ const HomeContainer = () => {
                     },
 
                     {
+                        "id": 5,
+                        "node_level": 2,
                         "name": "Jennifer Lee",
                         "title": "Chief Creative Officer, Walt Disney Animation Studios",
                         "profile_link": "https://theorg.com/org/disney/team/jennifer-lee",
                         "direct_reports_count": 2,
                         "direct_reports": [
                             {
+                                "id": 6,
+                                "node_level": 3,
                                 "name": "Clark Spencer",
                                 "title": "President, Walt Disney Animation Studios",
                                 "profile_link": "https://theorg.com/org/disney/team/clark-spencer",
@@ -60,21 +119,56 @@ const HomeContainer = () => {
                                 "direct_reports": []
                             },
                             {
+                                "id": 7,
+                                "node_level": 3,
                                 "name": "Andrew Millstein",
                                 "title": "Co-President, Walt Disney Animation Studios",
                                 "profile_link": "https://theorg.com/org/disney/team/andrew-millstein",
-                                "direct_reports_count": 0,
-                                "direct_reports": []
+                                "direct_reports_count": 2,
+                                "direct_reports": [
+                                    {
+                                        "id": 15,
+                                        "node_level": 4,
+                                        "name": "Jessica Virtue",
+                                        "title": "Co-President, Walt Disney Animation Studios",
+                                        "profile_link": "https://theorg.com/org/disney/team/jessica-virtue",
+                                        "direct_reports_count": 0,
+                                        "direct_reports": []
+                                    },
+                                    {
+                                        "id": 16,
+                                        "node_level": 4,
+                                        "name": "Aimee Scribner",
+                                        "title": "Co-President, Walt Disney Animation Studios",
+                                        "profile_link": "https://theorg.com/org/disney/team/aimee-scribner",
+                                        "direct_reports_count": 1,
+                                        "direct_reports": [
+                                            {
+                                                "id": 17,
+                                                "node_level": 5,
+                                                "name": "Paul Briggs",
+                                                "title": "Co-President, Walt Disney Animation Studios",
+                                                "profile_link": "https://theorg.com/org/disney/team/paul-briggs",
+                                                "direct_reports_count": 0,
+                                                "direct_reports": [],
+                                            },
+                                        ]
+                                    }
+                                ]
                             }
                         ]
                     },
                     {
+                        "id": 8,
+                        "node_level": 2,
                         "name": "Pete Docter",
                         "title": "Chief Creative Officer, Pixar Animation Studios",
                         "profile_link": "https://theorg.com/org/disney/team/pete-docter",
                         "direct_reports_count": 2,
                         "direct_reports": [
                             {
+                                "id": 9,
+                                "node_level": 3,
                                 "name": "Jim Morris",
                                 "title": "President, Pixar Animation Studios",
                                 "profile_link": "https://theorg.com/org/disney/team/jim-morris",
@@ -82,6 +176,8 @@ const HomeContainer = () => {
                                 "direct_reports": []
                             },
                             {
+                                "id": 10,
+                                "node_level": 3,
                                 "name": "Edwin Catmull",
                                 "title": "Co-founder, Pixar Animation Studios",
                                 "profile_link": "https://theorg.com/org/disney/team/edwin-catmull",
@@ -92,18 +188,24 @@ const HomeContainer = () => {
                     }
                     ,
                     {
+                        "id": 11,
+                        "node_level": 2,
                         "name": "Tilak Mandadi",
                         "title": "Executive Vice President and Chief Technology Officer, Disney Parks, Experiences and Products",
                         "profile_link": "https://theorg.com/org/disney/team/tilak-mandadi",
                         "direct_reports_count": 1,
                         "direct_reports": [
                             {
+                                "id": 12,
+                                "node_level": 3,
                                 "name": "Josh D'Amaro",
                                 "title": "Chairman, Disney Parks, Experiences and Products",
                                 "profile_link": "https://theorg.com/org/disney/team/josh-d-amaro",
                                 "direct_reports_count": 2,
                                 "direct_reports": [
                                     {
+                                        "id": 13,
+                                        "node_level": 4,
                                         "name": "Ken Potrock",
                                         "title": "President, Disneyland Resort",
                                         "profile_link": "https://theorg.com/org/disney/team/ken-potrock",
@@ -111,6 +213,8 @@ const HomeContainer = () => {
                                         "direct_reports": []
                                     },
                                     {
+                                        "id": 14,
+                                        "node_level": 4,
                                         "name": "Jeff Vahle",
                                         "title": "President, Walt Disney World Resort",
                                         "profile_link": "https://theorg.com/org/disney/team/jeff-vahle",
@@ -130,21 +234,81 @@ const HomeContainer = () => {
 
 
     const { company } = data;
-    const [selectedExecutiveIndex, setSelectedExecutiveIndex] = useState(null);
-    const [selectedPath, setSelectedPath] = useState([]);
+
+    const [selectedId, setSelectedId] = useState(null);
+    const [selectedPath, setSelectedPath] = useState([data.executives.CEO.id]);
+
+    const allEmployees = useMemo(() => flattenEmployees(data.executives.CEO), [data]);
 
 
-    const handleExecutiveSelection = (index) => {
-        setSelectedExecutiveIndex(index === selectedExecutiveIndex ? null : index);
+
+    const handleSelect = (id) => {
+        // Instead of setting a new path, we just set the selectedId which is used to filter the visible employees
+        setSelectedId(id);
+        // When a new employee is selected, append their ID to the selectedPath
+        setSelectedPath((prevPath) => [...prevPath, id]);
     };
 
-
-    const [selectedEmployee, setSelectedEmployee] = useState(null);
-
-    const handleSelectEmployee = (employee) => {
-        setSelectedEmployee(employee); // Set the selected employee to state
+    const getVisibleEmployees = (parentId) => {
+        // Filter employees that have the given parentId
+        return allEmployees.filter((employee) => employee.parentId === parentId);
     };
 
+    const getEmployeesAtLevel = (levelId) => {
+        return allEmployees.filter(employee => employee.parentId === levelId);
+    };
+
+    const renderPath = () => {
+        let pathComponents = [];
+
+        // Start with the CEO and render their EmployeeRow
+        let currentLevelId = data.executives.CEO.id;
+        pathComponents.push(
+            <EmployeeRow
+                key={currentLevelId}
+                employees={getEmployeesAtLevel(null)} // CEO has no parent, hence null
+                onSelect={handleSelect}
+                selectedId={currentLevelId}
+                isVisible={true} // CEO should always be visible
+            />
+        );
+
+        // Then render the path for each selected ID
+        selectedPath.forEach((id, index) => {
+            // Skip the CEO as it's already added
+            if (index === 0) return;
+
+            const employees = getEmployeesAtLevel(id);
+            pathComponents.push(<>
+                <Separator className='bg-black h-[5px]' orientation='vertical'></Separator>
+            <Separator className='bg-black w-1/2'></Separator>
+            <div className='flex justify-between w-1/2 mb-14'>
+                <Separator className='bg-black h-[10px]' orientation='vertical'></Separator>
+                <Separator className='bg-black h-[10px]' orientation='vertical'></Separator>
+            </div>
+                <EmployeeRow
+                    key={id}
+                    employees={employees}
+                    onSelect={handleSelect}
+                    selectedId={id}
+                    isVisible={selectedPath.includes(id)}
+                />
+                </>
+            );
+        });
+
+        return pathComponents;
+    };
+
+    const levels = useMemo(() => {
+        const levels = {};
+        allEmployees.forEach((employee) => {
+            const level = employee.node_level;
+            if (!levels[level]) levels[level] = [];
+            levels[level].push(employee);
+        });
+        return levels;
+    }, [allEmployees]);
 
     return (
         <div className='gap-10 flex flex-col min-h-screen'>
@@ -185,17 +349,12 @@ const HomeContainer = () => {
                     </CardContent>
                 </Card>
             </div>
-            <div className='w-full'>
+            <div className='w-full items-center justify-center flex flex-col'>
                 <span className='text-lg font-semibold mb-10 flex'>The Organization</span>
-                <EmployeeCard
-                    employee={data.executives.CEO}
-                    onSelect={handleSelectEmployee}
-                    selectedEmployee={selectedEmployee}
-                    depth={0}
-                />
+                {renderPath()}
             </div>
         </div>
-    )
-}
+    );
+};
 
 export default HomeContainer;
