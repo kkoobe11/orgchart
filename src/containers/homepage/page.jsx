@@ -25,7 +25,7 @@ const EmployeeCard = ({ employee, onSelect, selectedId, isVisible }) => {
                         <CardDescription className="text-gray-600 text-xs">{employee.title}</CardDescription>
                     </div>
                     {employee.direct_reports_count > 0 && (
-                        <Badge className="cursor-pointer" onClick={() => onSelect(employee.id)}>
+                        <Badge className="cursor-pointer absolute bottom-[-10px]" onClick={() => onSelect(employee.id)}>
                             {employee.direct_reports_count} Reports
                         </Badge>
                     )}
@@ -35,20 +35,34 @@ const EmployeeCard = ({ employee, onSelect, selectedId, isVisible }) => {
     );
 };
 
-const EmployeeRow = ({ employees, onSelect, selectedId }) => {
-    return (
-        <div className={`${employees.length < 3 ? 'flex items-center gap-4 justify-center' : 'grid grid-cols-4 gap-8 justify-start'} w-full my-4`}>
-            {employees.map((employee) => (
-                <EmployeeCard
-                    key={employee.id}
-                    employee={employee}
-                    onSelect={onSelect}
-                    selectedId={selectedId}
-                    isVisible={selectedId === null ? employee.node_level <= 2 : selectedId === employee.id || selectedId === employee.parentId}
-                />
-            ))}
-        </div>
+const ParentCard = ({ employee, onSelect, selectedId, isVisible }) => {
+    if (!isVisible) return null;
 
+    return (
+        <div className={`flex items-center gap-4 ${employee.node_level > 1 ? 'mt-4' : ''}`}>
+            <Image className='rounded-full' src='https://picsum.photos/200' width={25} height={25} alt="Employee Image" />
+            <span>{employee.name}</span>
+        </div>
+    );
+};
+
+const EmployeeRow = ({ employees, onSelect, selectedId, isVisible, parentEmployee }) => {
+    return (
+        <div className={'flex items-center gap-4 justify-center'}>
+            <div className='flex w-full flex-col items-center justify-center'>
+                <div className='flex gap-8'>
+                    {employees.map((employee) => (
+                        <EmployeeCard
+                            key={employee.id}
+                            employee={employee}
+                            onSelect={onSelect}
+                            selectedId={selectedId}
+                            isVisible={selectedId === null ? employee.node_level <= 2 : selectedId === employee.id || selectedId === employee.parentId}
+                        />
+                    ))}
+                </div>
+            </div>
+        </div>
     );
 };
 
@@ -260,46 +274,53 @@ const HomeContainer = () => {
 
     const renderPath = () => {
         let pathComponents = [];
-
-        // Start with the CEO and render their EmployeeRow
         let currentLevelId = data.executives.CEO.id;
+        let parentEmployee = null;
+
         pathComponents.push(
             <EmployeeRow
                 key={currentLevelId}
-                employees={getEmployeesAtLevel(null)} // CEO has no parent, hence null
+                employees={getEmployeesAtLevel(null)}
                 onSelect={handleSelect}
                 selectedId={currentLevelId}
-                isVisible={true} // CEO should always be visible
+                isVisible={true}
+                parentEmployee={parentEmployee}
             />
         );
 
-        // Then render the path for each selected ID
         selectedPath.forEach((id, index) => {
-            // Skip the CEO as it's already added
             if (index === 0) return;
 
             const employees = getEmployeesAtLevel(id);
-            pathComponents.push(<>
-                <Separator className='bg-black h-[5px]' orientation='vertical'></Separator>
-            <Separator className='bg-black w-1/2'></Separator>
-            <div className='flex justify-between w-1/2 mb-14'>
-                <Separator className='bg-black h-[10px]' orientation='vertical'></Separator>
-                <Separator className='bg-black h-[10px]' orientation='vertical'></Separator>
-            </div>
-                <EmployeeRow
-                    key={id}
-                    employees={employees}
-                    onSelect={handleSelect}
-                    selectedId={id}
-                    isVisible={selectedPath.includes(id)}
-                />
+            parentEmployee = allEmployees.find(employee => employee.id === id);
+
+            const employeeCount = employees.length;
+            const widthClass = employeeCount > 3 ? 'w-3/4' : employeeCount < 3 ? 'w-1/2' : 'w-1/4';
+
+            pathComponents.push(
+                <>
+                        <>
+                            <Separator className='bg-black h-[5px]' orientation='vertical'></Separator>
+                            <Separator className={`bg-black ${widthClass}`}></Separator>
+                            <div className={`flex justify-between ${widthClass} mb-14`}>
+                                <Separator className='bg-black h-[10px]' orientation='vertical'></Separator>
+                                <Separator className='bg-black h-[10px]' orientation='vertical'></Separator>
+                            </div>
+                        </>
+                    <EmployeeRow
+                        key={id}
+                        employees={employees}
+                        onSelect={handleSelect}
+                        selectedId={id}
+                        isVisible={selectedPath.includes(id)}
+                        parentEmployee={parentEmployee}
+                    />
                 </>
             );
         });
 
         return pathComponents;
     };
-
     const levels = useMemo(() => {
         const levels = {};
         allEmployees.forEach((employee) => {
