@@ -1,70 +1,21 @@
 'use client'
-import { useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import React, {useRef, useState} from 'react';
+import Fullscreen from "@/assets/svg/fullscreen.svg";
+import Minimize from "@/assets/svg/exit.svg";
+import Screenshot from "@/assets/svg/screenshot.svg";
+import html2canvas from 'html2canvas';
+
+import OrgChart from "@/containers/homepage/components/orgchart/page";
 
 const flattenEmployees = (employee, parentId = null) => {
     return [
-        { ...employee, parentId },
+        {...employee, parentId},
         ...employee.direct_reports.flatMap((report) => flattenEmployees(report, employee.id)),
     ];
 };
 
-const EmployeeCard = ({ employee, onSelect, selectedId, isVisible }) => {
-    if (!isVisible) return null;
-
-    return (
-        <div className={`flex flex-col items-center ${employee.node_level > 1 ? 'mt-4' : ''}`}>
-            <Card className="bg-white shadow-lg rounded-xl my-4 w-[300px] h-[150px]">
-                <CardHeader className="p-4 flex rounded-xl justify-between items-center bg-gray-100 h-full relative">
-                    <Image className='rounded-full absolute top-[-40px]' src='https://picsum.photos/200' width={75} height={75} alt="Employee Image" />
-                    <div className='pt-10 flex flex-col'>
-                        <CardTitle className="text-xl font-bold">{employee.name}</CardTitle>
-                        <CardDescription className="text-gray-600 text-xs">{employee.title}</CardDescription>
-                    </div>
-                    {employee.direct_reports_count > 0 && (
-                        <Badge className="cursor-pointer absolute bottom-[-10px]" onClick={() => onSelect(employee.id)}>
-                            {employee.direct_reports_count} Reports
-                        </Badge>
-                    )}
-                </CardHeader>
-            </Card>
-        </div>
-    );
-};
-
-const ParentCard = ({ employee, onSelect, selectedId, isVisible }) => {
-    if (!isVisible) return null;
-
-    return (
-        <div className={`flex items-center gap-4 ${employee.node_level > 1 ? 'mt-4' : ''}`}>
-            <Image className='rounded-full' src='https://picsum.photos/200' width={25} height={25} alt="Employee Image" />
-            <span>{employee.name}</span>
-        </div>
-    );
-};
-
-const EmployeeRow = ({ employees, onSelect, selectedId, isVisible, parentEmployee }) => {
-    return (
-        <div className={'flex items-center gap-4 justify-center'}>
-            <div className='flex w-full flex-col items-center justify-center'>
-                <div className='flex gap-8'>
-                    {employees.map((employee) => (
-                        <EmployeeCard
-                            key={employee.id}
-                            employee={employee}
-                            onSelect={onSelect}
-                            selectedId={selectedId}
-                            isVisible={selectedId === null ? employee.node_level <= 2 : selectedId === employee.id || selectedId === employee.parentId}
-                        />
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-};
 
 const HomeContainer = () => {
     const data = {
@@ -245,134 +196,93 @@ const HomeContainer = () => {
             }
         }
     }
+    const [isHidden, setIsHidden] = useState(false);
 
 
-    const { company } = data;
+    const {company} = data;
 
-    const [selectedId, setSelectedId] = useState(null);
-    const [selectedPath, setSelectedPath] = useState([data.executives.CEO.id]);
+    const orgChartRef = useRef(null);
 
-    const allEmployees = useMemo(() => flattenEmployees(data.executives.CEO), [data]);
-
-
-
-    const handleSelect = (id) => {
-        // Instead of setting a new path, we just set the selectedId which is used to filter the visible employees
-        setSelectedId(id);
-        // When a new employee is selected, append their ID to the selectedPath
-        setSelectedPath((prevPath) => [...prevPath, id]);
+    const captureScreenshot = async (element) => {
+        const canvas = await html2canvas(element);
+        const imgData = canvas.toDataURL();
+        const link = document.createElement('a');
+        link.download = 'screenshot.png';
+        link.href = imgData;
+        link.click();
     };
 
-    const getVisibleEmployees = (parentId) => {
-        // Filter employees that have the given parentId
-        return allEmployees.filter((employee) => employee.parentId === parentId);
+    const handleCaptureClick = () => {
+        if (orgChartRef.current) {
+            captureScreenshot(orgChartRef.current);
+        }
     };
 
-    const getEmployeesAtLevel = (levelId) => {
-        return allEmployees.filter(employee => employee.parentId === levelId);
-    };
-
-    const renderPath = () => {
-        let pathComponents = [];
-        let currentLevelId = data.executives.CEO.id;
-        let parentEmployee = null;
-
-        pathComponents.push(
-            <EmployeeRow
-                key={currentLevelId}
-                employees={getEmployeesAtLevel(null)}
-                onSelect={handleSelect}
-                selectedId={currentLevelId}
-                isVisible={true}
-                parentEmployee={parentEmployee}
-            />
-        );
-
-        selectedPath.forEach((id, index) => {
-            if (index === 0) return;
-
-            const employees = getEmployeesAtLevel(id);
-            parentEmployee = allEmployees.find(employee => employee.id === id);
-
-            const employeeCount = employees.length;
-            const widthClass = employeeCount > 3 ? 'w-3/4' : employeeCount < 3 ? 'w-1/2' : 'w-1/4';
-
-            pathComponents.push(
-                <>
-                        <>
-                            <Separator className='bg-black h-[5px]' orientation='vertical'></Separator>
-                            <Separator className={`bg-black ${widthClass}`}></Separator>
-                            <div className={`flex justify-between ${widthClass} mb-14`}>
-                                <Separator className='bg-black h-[10px]' orientation='vertical'></Separator>
-                                <Separator className='bg-black h-[10px]' orientation='vertical'></Separator>
-                            </div>
-                        </>
-                    <EmployeeRow
-                        key={id}
-                        employees={employees}
-                        onSelect={handleSelect}
-                        selectedId={id}
-                        isVisible={selectedPath.includes(id)}
-                        parentEmployee={parentEmployee}
-                    />
-                </>
-            );
-        });
-
-        return pathComponents;
-    };
-    const levels = useMemo(() => {
-        const levels = {};
-        allEmployees.forEach((employee) => {
-            const level = employee.node_level;
-            if (!levels[level]) levels[level] = [];
-            levels[level].push(employee);
-        });
-        return levels;
-    }, [allEmployees]);
 
     return (
-        <div className='gap-10 flex flex-col min-h-screen'>
-            <div>
-                <Card>
-                    <CardHeader className='flex flex-col gap-4'>
-                        <CardTitle>
-                            <div className='flex items-center gap-2'>
-                                <Image className='rounded-lg' src='https://picsum.photos/200' width={60} height={60} alt="Company Logo" />
-                                {company.name}
-                            </div>
-                        </CardTitle>
-                        <CardDescription>{company.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className='grid grid-cols-6 gap-4'>
-                            <div className=' flex flex-col gap-2 '>
-                                <span>Industry: </span>
-                                <CardDescription>{company.industry}</CardDescription>
-                            </div>
-                            <div className=' flex flex-col gap-2 '>
-                                <span>Headquarters: </span>
-                                <CardDescription>{company.headquarters}</CardDescription>
-                            </div>
-                            <div className='col-span-1'>
-                                <span>Founded: </span>
-                                <CardDescription>{company.founded}</CardDescription>
-                            </div>
-                            <div className='col-span-1'>
-                                <span>Employees: </span>
-                                <CardDescription>{company.employee_count}</CardDescription>
-                            </div>
-                            <div className='col-span-1'>
-                                <span>Website: </span>
-                                <CardDescription><a href={company.website} target="_blank" rel="noopener noreferrer">{company.website}</a></CardDescription>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+        <div className=' flex flex-col items-center'>
+
+            <div className={`max-w-4xl ${isHidden ? 'hidden' : ''}`}>
+                <div className="hidden max-w-screen-xl p-10 px-4 pb-16 mx-auto space-y-6 md:block">
+                    <div className="flex flex-col space-y-8 lg:space-x-12 lg:space-y-0">
+                        <Card>
+                            <CardHeader className='flex flex-col gap-4'>
+                                <CardTitle>
+                                    <div className='flex items-center gap-2'>
+                                        <Image className='rounded-lg' src='https://picsum.photos/200' width={60}
+                                               height={60}
+                                               alt="Company Logo"/>
+                                        {company.name}
+                                    </div>
+                                </CardTitle>
+                                <CardDescription>{company.description}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className='grid grid-cols-6 gap-4'>
+                                    <div className=' flex flex-col gap-2 '>
+                                        <span>Industry: </span>
+                                        <CardDescription>{company.industry}</CardDescription>
+                                    </div>
+                                    <div className=' flex flex-col gap-2 '>
+                                        <span>Headquarters: </span>
+                                        <CardDescription>{company.headquarters}</CardDescription>
+                                    </div>
+                                    <div className='col-span-1'>
+                                        <span>Founded: </span>
+                                        <CardDescription>{company.founded}</CardDescription>
+                                    </div>
+                                    <div className='col-span-1'>
+                                        <span>Employees: </span>
+                                        <CardDescription>{company.employee_count}</CardDescription>
+                                    </div>
+                                    <div className='col-span-1'>
+                                        <span>Website: </span>
+                                        <CardDescription><a href={company.website} target="_blank"
+                                                            rel="noopener noreferrer">{company.website}</a></CardDescription>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
             </div>
-            <div className='w-full items-center justify-center flex flex-col'>
-                <span className='text-lg font-semibold mb-10 flex'>The Organization</span>
-                {renderPath()}
+            <div
+                className='w-full  overflow-hidden  items-center justify-center flex flex-col  relative '>
+                {
+                    isHidden ?
+                        <Image alt={'minimize'} src={Minimize}
+                               className={`absolute top-10 right-10 transform transition-transform duration-500 ${isHidden ? 'rotate-180' : ''}`}
+                               onClick={() => setIsHidden(false)}>
+                        </Image> : <Image alt={'maximize'} src={Fullscreen}
+                                          className="absolute top-10 right-10 transform transition-transform duration-500"
+                                          onClick={() => setIsHidden(true)}>
+                        </Image>
+                }
+                {/*<Image className="absolute top-10 right-20 transform transition-transform duration-500"*/}
+                {/*       src={Screenshot} alt={'screenshot'} onClick={handleCaptureClick}></Image>*/}
+                <div className='w-full border border-black' ref={orgChartRef}>
+                    <OrgChart/>
+                </div>
             </div>
         </div>
     );
