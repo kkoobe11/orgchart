@@ -9,12 +9,6 @@ import html2canvas from 'html2canvas';
 
 import OrgChart from "@/containers/homepage/components/orgchart/page";
 
-const flattenEmployees = (employee, parentId = null) => {
-    return [
-        {...employee, parentId},
-        ...employee.direct_reports.flatMap((report) => flattenEmployees(report, employee.id)),
-    ];
-};
 
 
 const HomeContainer = () => {
@@ -220,67 +214,67 @@ const HomeContainer = () => {
 
 
     return (
-        <div className=' flex flex-col items-center'>
+        <div className='flex flex-col items-center'>
 
-            <div className={`max-w-4xl ${isHidden ? 'hidden' : ''}`}>
-                <div className="hidden max-w-screen-xl p-10 px-4 pb-16 mx-auto space-y-6 md:block">
-                    <div className="flex flex-col space-y-8 lg:space-x-12 lg:space-y-0">
-                        <Card>
-                            <CardHeader className='flex flex-col gap-4'>
-                                <CardTitle>
-                                    <div className='flex items-center gap-2'>
-                                        <Image className='rounded-lg' src='https://picsum.photos/200' width={60}
-                                               height={60}
-                                               alt="Company Logo"/>
-                                        {company.name}
-                                    </div>
-                                </CardTitle>
-                                <CardDescription>{company.description}</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className='grid grid-cols-6 gap-4'>
-                                    <div className=' flex flex-col gap-2 '>
-                                        <span>Industry: </span>
-                                        <CardDescription>{company.industry}</CardDescription>
-                                    </div>
-                                    <div className=' flex flex-col gap-2 '>
-                                        <span>Headquarters: </span>
-                                        <CardDescription>{company.headquarters}</CardDescription>
-                                    </div>
-                                    <div className='col-span-1'>
-                                        <span>Founded: </span>
-                                        <CardDescription>{company.founded}</CardDescription>
-                                    </div>
-                                    <div className='col-span-1'>
-                                        <span>Employees: </span>
-                                        <CardDescription>{company.employee_count}</CardDescription>
-                                    </div>
-                                    <div className='col-span-1'>
-                                        <span>Website: </span>
-                                        <CardDescription><a href={company.website} target="_blank"
-                                                            rel="noopener noreferrer">{company.website}</a></CardDescription>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-            </div>
+            {/*<div className={`max-w-4xl ${isHidden ? 'hidden' : ''}`}>*/}
+            {/*    <div className="hidden max-w-screen-xl p-10 px-4 pb-16 mx-auto space-y-6 md:block">*/}
+            {/*        <div className="flex flex-col space-y-8 lg:space-x-12 lg:space-y-0">*/}
+            {/*            <Card>*/}
+            {/*                <CardHeader className='flex flex-col gap-4'>*/}
+            {/*                    <CardTitle>*/}
+            {/*                        <div className='flex items-center gap-2'>*/}
+            {/*                            <Image className='rounded-lg' src='https://picsum.photos/200' width={60}*/}
+            {/*                                   height={60}*/}
+            {/*                                   alt="Company Logo"/>*/}
+            {/*                            {company.name}*/}
+            {/*                        </div>*/}
+            {/*                    </CardTitle>*/}
+            {/*                    <CardDescription>{company.description}</CardDescription>*/}
+            {/*                </CardHeader>*/}
+            {/*                <CardContent>*/}
+            {/*                    <div className='grid grid-cols-6 gap-4'>*/}
+            {/*                        <div className=' flex flex-col gap-2 '>*/}
+            {/*                            <span>Industry: </span>*/}
+            {/*                            <CardDescription>{company.industry}</CardDescription>*/}
+            {/*                        </div>*/}
+            {/*                        <div className=' flex flex-col gap-2 '>*/}
+            {/*                            <span>Headquarters: </span>*/}
+            {/*                            <CardDescription>{company.headquarters}</CardDescription>*/}
+            {/*                        </div>*/}
+            {/*                        <div className='col-span-1'>*/}
+            {/*                            <span>Founded: </span>*/}
+            {/*                            <CardDescription>{company.founded}</CardDescription>*/}
+            {/*                        </div>*/}
+            {/*                        <div className='col-span-1'>*/}
+            {/*                            <span>Employees: </span>*/}
+            {/*                            <CardDescription>{company.employee_count}</CardDescription>*/}
+            {/*                        </div>*/}
+            {/*                        <div className='col-span-1'>*/}
+            {/*                            <span>Website: </span>*/}
+            {/*                            <CardDescription><a href={company.website} target="_blank"*/}
+            {/*                                                rel="noopener noreferrer">{company.website}</a></CardDescription>*/}
+            {/*                        </div>*/}
+            {/*                    </div>*/}
+            {/*                </CardContent>*/}
+            {/*            </Card>*/}
+            {/*        </div>*/}
+            {/*    </div>*/}
+            {/*</div>*/}
             <div
                 className='w-full  overflow-hidden  items-center justify-center flex flex-col  relative '>
-                {
-                    isHidden ?
-                        <Image alt={'minimize'} src={Minimize}
-                               className={`absolute top-10 right-10 transform transition-transform duration-500 ${isHidden ? 'rotate-180' : ''}`}
-                               onClick={() => setIsHidden(false)}>
-                        </Image> : <Image alt={'maximize'} src={Fullscreen}
-                                          className="absolute top-10 right-10 transform transition-transform duration-500"
-                                          onClick={() => setIsHidden(true)}>
-                        </Image>
-                }
+                {/*{*/}
+                {/*    isHidden ?*/}
+                {/*        <Image alt={'minimize'} src={Minimize}*/}
+                {/*               className={`absolute top-10 right-10 transform transition-transform duration-500 ${isHidden ? 'rotate-180' : ''}`}*/}
+                {/*               onClick={() => setIsHidden(false)}>*/}
+                {/*        </Image> : <Image alt={'maximize'} src={Fullscreen}*/}
+                {/*                          className="absolute top-10 right-10 transform transition-transform duration-500"*/}
+                {/*                          onClick={() => setIsHidden(true)}>*/}
+                {/*        </Image>*/}
+                {/*}*/}
                 {/*<Image className="absolute top-10 right-20 transform transition-transform duration-500"*/}
                 {/*       src={Screenshot} alt={'screenshot'} onClick={handleCaptureClick}></Image>*/}
-                <div className='w-full border border-black' ref={orgChartRef}>
+                <div className='w-full min-h-[calc(100vh-5rem)]' ref={orgChartRef}>
                     <OrgChart/>
                 </div>
             </div>
